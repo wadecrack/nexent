@@ -27,8 +27,9 @@ export default function SpacePage() {
   const { t } = useTranslation("common");
   const { message } = App.useApp();
   const { pageVariants, pageTransition } = useSetupFlow();
+  const { user } = useAuthorizationContext();
   const [isImporting, setIsImporting] = useState(false);
-  const { agents, isLoading, invalidate } = useAgentList();
+  const { agents, isLoading, invalidate } = useAgentList(user?.tenantId ?? null);
 
   // Import wizard state
   const [importWizardVisible, setImportWizardVisible] = useState(false);

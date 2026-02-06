@@ -3,20 +3,20 @@ import { fetchAgentList as fetchAgentListService } from "@/services/agentConfigS
 import { useMemo, useEffect } from "react";
 import { Agent } from "@/types/agentConfig";
 
-export function useAgentList(options?: { enabled?: boolean; staleTime?: number }) {
+export function useAgentList(tenantId: string | null, options?: { enabled?: boolean; staleTime?: number }) {
 	const queryClient = useQueryClient();
 
 	const query = useQuery({
-		queryKey: ["agents"],
+		queryKey: ["agents", tenantId],
 		queryFn: async () => {
-			const res = await fetchAgentListService();
+			const res = await fetchAgentListService(tenantId ?? undefined);
 			if (!res || !res.success) {
 				throw new Error(res?.message || "Failed to fetch agents");
 			}
 			return res.data || [];
 		},
 		staleTime: options?.staleTime ?? 60_000,
-		enabled: options?.enabled ?? true,
+		enabled: (options?.enabled ?? true) && !!tenantId,
 	});
 
 	const agents = query.data ?? [];

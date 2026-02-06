@@ -93,7 +93,7 @@ export default function AgentList({ tenantId }: { tenantId: string | null }) {
     value: "",
   });
 
-  const { agents, isLoading, refetch } = useAgentList({
+  const { agents, isLoading, refetch } = useAgentList(tenantId, {
     staleTime: 0, // Always fetch fresh data for admin view
   });
 
