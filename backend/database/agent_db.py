@@ -148,7 +148,6 @@ def update_agent(agent_id, agent_info, tenant_id, user_id):
     with (get_db_session() as session):
         # update ag_tenant_agent_t
         agent = session.query(AgentInfo).filter(AgentInfo.agent_id == agent_id,
-                                                AgentInfo.tenant_id == tenant_id,
                                                 AgentInfo.delete_flag != 'Y'
                                                 ).first()
         if not agent:
