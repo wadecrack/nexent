@@ -12,7 +12,7 @@ from typing import Any, Dict
 
 import httpx
 
-from nexent.utils.http_client_manager import http_client_manager
+from utils.http_client_manager import http_client_manager
 
 logger = logging.getLogger("dify_service")
 

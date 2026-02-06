@@ -241,13 +241,26 @@ def get_db_session(db_session=None):
 
 
 def as_dict(obj):
+    """
+    Convert a SQLAlchemy ORM object to a dictionary.
 
-    # Handle SQLAlchemy ORM objects (both TableBase and other DeclarativeBase subclasses)
+    Handles SQLAlchemy ORM objects (both TableBase and other DeclarativeBase subclasses).
+    """
+    # Handle SQLAlchemy ORM objects
     if hasattr(obj, '__class__') and hasattr(obj.__class__, '__mapper__'):
-        return {c.key: getattr(obj, c.key) for c in class_mapper(obj.__class__).columns}
+        # Use obj.__dict__ to get all attributes, then filter to only include
+        # column keys that exist on the mapper to ensure we get all columns
+        # including primary key columns
+        mapper = class_mapper(obj.__class__)
+        column_keys = {c.key for c in mapper.columns}
+        return {key: getattr(obj, key) for key in column_keys}
 
-    # noinspection PyProtectedMember
-    return dict(obj._mapping)
+    # Handle SQLAlchemy Row/RowMapping objects
+    if hasattr(obj, '_mapping'):
+        return dict(obj._mapping)
+
+    # Fallback to __dict__ for other objects
+    return dict(obj.__dict__)
 
 
 def filter_property(data, model_class):
