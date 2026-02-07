@@ -15,7 +15,7 @@ patch('nexent.storage.storage_client_factory.create_storage_client_from_config',
 patch('nexent.storage.minio_config.MinIOStorageConfig.validate', lambda self: None).start()
 patch('backend.database.client.MinioClient', return_value=minio_client_mock).start()
 
-from consts.exceptions import NotFoundException, UnauthorizedError
+from consts.exceptions import NotFoundException, UnauthorizedError, DuplicateError
 from backend.services.invitation_service import (
     create_invitation_code,
     update_invitation_code,
@@ -207,13 +207,10 @@ def test_create_invitation_code_user_not_found(mock_get_user_info):
         )
 
 
-@patch('backend.services.invitation_service.query_invitation_by_code')
 @patch('backend.services.invitation_service.get_user_tenant_by_user_id')
-def test_create_invitation_code_duplicate(mock_get_user_info, mock_query_invitation_by_code, mock_user_info):
+@patch('backend.services.invitation_service.query_invitation_by_code')
+def test_create_invitation_code_duplicate(mock_query_invitation_by_code, mock_get_user_info, mock_user_info):
     """Test creating invitation code with duplicate code raises DuplicateError"""
-    # Import DuplicateError from the module to avoid mocking issues
-    from backend.services.invitation_service import DuplicateError
-
     # Setup mocks
     mock_user_info["user_role"] = "SU"
     mock_get_user_info.return_value = mock_user_info
