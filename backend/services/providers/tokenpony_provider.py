@@ -76,9 +76,10 @@ class TokenPonyModelProvider(AbstractModelProvider):
                 if 'rerank' in m_id:
                     cleaned_model.update({"model_tag": "reranker", "model_type": "reranker"})
                     categorized_models['reranker'].append(cleaned_model)
-                #2. embedding
+
+                # 2. embedding
                 elif 'embedding' in m_id or m_id.startswith('bge-'):
-                    cleaned_model.update({"model_tag": "embedding", "model_type": "embedding", "max_tokens": 0})
+                    cleaned_model.update({"model_tag": "embedding", "model_type": "embedding"})
                     categorized_models['embedding'].append(cleaned_model)
 
                 # 3. STT (Speech-to-Text / Audio understanding)
@@ -87,7 +88,7 @@ class TokenPonyModelProvider(AbstractModelProvider):
                     categorized_models['stt'].append(cleaned_model)
 
 
-                # 4. TTS (Text-to-Speech)
+                # 4. TTS(Text-to-Speech)
                 elif 'tts' in m_id:
                     cleaned_model.update({"model_tag": "tts", "model_type": "tts"})
                     categorized_models['tts'].append(cleaned_model)
