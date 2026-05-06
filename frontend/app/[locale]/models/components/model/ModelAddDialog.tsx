@@ -434,11 +434,7 @@ export const ModelAddDialog = ({
       );
     }
     if (form.type === MODEL_TYPES.RERANK) {
-      return (
-        form.name.trim() !== "" &&
-        form.url.trim() !== "" &&
-        form.apiKey.trim() !== ""
-      );
+      return form.name.trim() !== "" && form.url.trim() !== "";
     }
     if (form.type === MODEL_TYPES.STT) {
       // For STT models, validate based on provider type
@@ -449,8 +445,8 @@ export const ModelAddDialog = ({
           form.accessToken.trim() !== ""
         );
       } else {
-        // DashScope requires API Key and model name
-        return form.apiKey.trim() !== "" && form.name.trim() !== "";
+        // DashScope requires API Key
+        return form.apiKey.trim() !== "";
       }
     }
     if (form.type === MODEL_TYPES.TTS) {
@@ -514,8 +510,6 @@ export const ModelAddDialog = ({
           } else {
             sttConfig.apiKey = form.apiKey.trim() === "" ? "sk-no-api-key" : form.apiKey;
             sttConfig.modelFactory = "dashscope";
-            sttConfig.modelName = form.name;
-            sttConfig.baseUrl = form.url;
           }
 
           const result = await modelService.verifyModelConfigConnectivity(sttConfig);
@@ -562,6 +556,30 @@ export const ModelAddDialog = ({
         }
       }
 
+      // Set connectivity status
+      if (result.connectivity) {
+        setConnectivityStatus({
+          status: "available",
+          message: t("model.dialog.connectivity.status.available"),
+        });
+      } else {
+        // Set status to unavailable
+        setConnectivityStatus({
+          status: "unavailable",
+          message: t("model.dialog.connectivity.status.unavailable"),
+        });
+        // Show detailed error message using internationalized component (same as add failure)
+        if (result.error) {
+          const translatedError = translateError(result.error, t);
+          // Ensure translatedError is a valid string, fallback to original error if needed
+          const errorText =
+            translatedError && translatedError.length > 0
+              ? translatedError
+              : result.error || "Unknown error";
+          message.error(
+            t("model.dialog.error.connectivityFailed", { error: errorText })
+          );
+        }
       // Set connectivity status
       if (connectivity) {
         setConnectivityStatus({
@@ -718,9 +736,10 @@ export const ModelAddDialog = ({
       let maxTokensValue = parseInt(form.maxTokens);
       if (
         form.type === MODEL_TYPES.EMBEDDING ||
-        form.type === MODEL_TYPES.MULTI_EMBEDDING
+        form.type === MODEL_TYPES.MULTI_EMBEDDING ||
+        form.type === MODEL_TYPES.RERANK
       ) {
-        // For embedding models, use the vector dimension as maxTokens
+        // For embedding/rerank models, the backend does not rely on max_tokens in the same way as LLM.
         maxTokensValue = 0;
       }
 

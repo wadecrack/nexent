@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict, Optional
 
 from nexent.core.models.stt_model import BaseSTTModel
-from nexent.core.models.tts_model import BaseTTSModel
+from nexent.core.models.base_tts_model import BaseTTSModel
 from nexent.core.models.volc_stt_model import VolcSTTConfig, VolcSTTModel
 from nexent.core.models.ali_stt_model import AliSTTConfig, AliSTTModel
 from nexent.core.models.volc_tts_model import VolcTTSConfig, VolcTTSModel
@@ -54,6 +54,7 @@ class VoiceService:
         
         if use_volc:
             # Use Volcano Engine STT
+            logger.info(f"Using Volcano Engine STT with appid={model_appid}, access_token={'***' if access_token else None}")
             volc_config = VolcSTTConfig(
                 appid=model_appid or "",
                 access_token=access_token or "",
@@ -64,6 +65,7 @@ class VoiceService:
             return VolcSTTModel(volc_config, TEST_PCM_PATH)
         else:
             # Use Ali Cloud STT (default)
+            logger.info(f"Using Ali Cloud STT with api_key={'***' if api_key else None}")
             ali_config = AliSTTConfig(
                 api_key=api_key or "",
                 model=model_name or "qwen3-asr-flash-realtime",
@@ -167,8 +169,12 @@ class VoiceService:
             TTS model instance based on configuration
         """
         use_volc = model_factory and model_factory.lower() in ["volc", "volcano", "volcengine", "火山引擎"]
+        if not use_volc and base_url and "openspeech.bytedance.com" in base_url:
+            use_volc = True
+            logger.info("Auto-detected Volcano Engine TTS from base_url")
 
         if use_volc:
+            logger.info(f"Using Volcano Engine TTS with appid={model_appid}, access_token={'***' if access_token else None}")
             volc_config = VolcTTSConfig(
                 appid=model_appid or "",
                 token=access_token or "",
@@ -181,6 +187,7 @@ class VoiceService:
             is_qwen_realtime = model and ("qwen" in model.lower() or "/realtime" in (base_url or "").lower())
             effective_voice = "Cherry" if is_qwen_realtime else "longxiaochun_v2"
 
+            logger.info(f"Using Ali Cloud TTS with api_key={'***' if api_key else None}")
             ali_config = AliTTSConfig(
                 api_key=api_key or "",
                 model=model or ("qwen3-tts-instruct-flash-realtime" if is_qwen_realtime else "cosyvoice-v2"),
@@ -273,13 +280,16 @@ class VoiceService:
             STTConnectionException: If STT streaming fails
         """
         try:
+            # Extract config from stt_config dict if provided
+            logger.info(f"Received stt_config: {stt_config}")
+            
             model_factory = None
             model_name = None
             api_key = None
             model_appid = None
             access_token = None
             base_url = None
-
+            
             if stt_config:
                 model_factory = stt_config.get("model_factory")
                 model_name = stt_config.get("model") or stt_config.get("model_name")
@@ -288,6 +298,8 @@ class VoiceService:
                 access_token = stt_config.get("access_token")
                 base_url = stt_config.get("base_url") or stt_config.get("baseUrl")
                 language = stt_config.get("language", language)
+                logger.info(f"Extracted config - model_factory: {model_factory}, api_key: {'***' if api_key else None}, "
+                           f"model_appid: {'***' if model_appid else None}, access_token: {'***' if access_token else None}")
             else:
                 logger.warning("No stt_config provided, will use tenant model config if available")
 
@@ -362,10 +374,13 @@ class VoiceService:
                 speed_ratio = float(tts_config.get("speed_ratio", 1.0))
                 base_url = tts_config.get("base_url") or tts_config.get("baseUrl")
                 model_name = tts_config.get("model") or tts_config.get("model_name")
+                logger.info(f"Extracted TTS config - model_factory: {model_factory}, api_key: {'***' if api_key else None}, "
+                           f"model_appid: {'***' if model_appid else None}, access_token: {'***' if access_token else None}, "
+                           f"base_url: {base_url}, model: {model_name}")
 
             # If model_name is provided directly, use it
             effective_model = model_name_override or model_name
-           
+            logger.info(f"TTS generation using model: {effective_model}")
 
             if api_key or effective_model:
                 tts_model = self._get_tts_model_from_config(
@@ -482,7 +497,7 @@ class VoiceService:
                 language=language
             )
             
-           
+            logger.info(f"Checking STT connectivity for model factory: {model_factory}")
             connected = await stt_model.check_connectivity()
 
             if not connected:
@@ -534,7 +549,7 @@ class VoiceService:
                 model=model
             )
 
-            
+            logger.info(f"Checking TTS connectivity for model factory: {model_factory}")
             connected = await tts_model.check_connectivity()
             if not connected:
                 logger.error("TTS service connection failed")

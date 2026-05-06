@@ -12,7 +12,7 @@ from typing import Any, AsyncGenerator, Dict, Optional, Union
 
 import websockets
 
-from .tts_model import BaseTTSModel
+from .base_tts_model import BaseTTSModel
 
 logger = logging.getLogger(__name__)
 
